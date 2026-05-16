@@ -1,0 +1,2 @@
+{{ query }}
+{% if label %}[Detected: {{ label }}{% if confidence %} — {{ "%.0f"|format(confidence * 100) }}% confidence{% endif %}]{% endif %}

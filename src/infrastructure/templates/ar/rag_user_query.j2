@@ -1,0 +1,2 @@
+{{ query }}
+{% if label %}[تم اكتشاف: {{ label }}{% if confidence %} — دقة {{ "%.0f"|format(confidence * 100) }}%{% endif %}]{% endif %}

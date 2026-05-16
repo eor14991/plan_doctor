@@ -1,0 +1,127 @@
+# =============================================================================
+# PlantDoctor RAG — .gitignore
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# SECRETS — NEVER COMMIT THESE
+# -----------------------------------------------------------------------------
+.env
+.env.*
+!.env.example
+
+# Firebase service account JSON keys
+*-firebase-adminsdk-*.json
+*firebase*.json
+service-account*.json
+google-credentials*.json
+
+# Any generic credential / secret files
+*.pem
+*.key
+secrets/
+
+# -----------------------------------------------------------------------------
+# Python
+# -----------------------------------------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+.venv/
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+htmlcov/
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# ruff
+.ruff_cache/
+
+# -----------------------------------------------------------------------------
+# Project-specific storage (runtime data, not source)
+# -----------------------------------------------------------------------------
+storage/
+!storage/.gitkeep
+
+# -----------------------------------------------------------------------------
+# IDEs
+# -----------------------------------------------------------------------------
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# Obsidian vault settings
+.obsidian/
+
+# -----------------------------------------------------------------------------
+# Docker
+# -----------------------------------------------------------------------------
+# Don't ignore docker-compose.yml or Dockerfile — those are source files
+# Ignore any local override files
+docker-compose.override.yml
+docker-compose.local.yml
+
+# -----------------------------------------------------------------------------
+# Logs
+# -----------------------------------------------------------------------------
+*.log
+logs/
+
+agri-rag-73866-firebase-adminsdk-fbsvc-fef8659b76.json

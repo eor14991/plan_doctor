@@ -1,0 +1,61 @@
+# PlantDoctor RAG — Direct Dependencies
+# ======================================
+# ده الملف الي بتعمله install بيه.
+# الـ requirements.txt ده مش auto-generated —
+# ده manually maintained علشان يكون واضح وبسيط.
+#
+# لو عاوز تعمل pinned versions (للـ production):
+#   pip install pip-tools
+#   pip-compile pyproject.toml -o requirements.txt
+#
+# تشغيل:
+#   pip install -r requirements.txt
+
+# ── Web Framework ─────────────────────────────────────────────────────────────
+fastapi[standard]>=0.115.0
+uvicorn[standard]>=0.30.0
+python-multipart>=0.0.9
+slowapi>=0.1.9
+
+# ── Config & Validation ───────────────────────────────────────────────────────
+pydantic>=2.7.0
+pydantic-settings>=2.3.0
+python-dotenv>=1.0.0
+
+# ── Firebase (replaces MongoDB entirely) ──────────────────────────────────────
+# firebase-admin: Admin SDK (Auth verification + Firestore)
+# google-cloud-firestore: Async Firestore client
+firebase-admin>=6.5.0
+google-cloud-firestore>=2.16.0
+
+# ── Vector Database ───────────────────────────────────────────────────────────
+qdrant-client>=1.9.0
+
+# ── ML: Embedding ─────────────────────────────────────────────────────────────
+sentence-transformers>=3.0.0
+
+# ── ML: Summarization + Chunking Tokenizer ────────────────────────────────────
+# transformers: بتستخدمها في:
+#   1. HuggingFaceSummarizationService (pipeline("summarization"))
+#   2. TokenizerDocumentChunker (AutoTokenizer.from_pretrained)
+# torch: backend للنموذجين
+transformers>=4.40.0
+torch>=2.2.0
+
+# ── LLM Generation ────────────────────────────────────────────────────────────
+openai>=1.30.0
+cohere>=5.5.0
+
+# ── Document Loading & Chunking ───────────────────────────────────────────────
+langchain-community>=0.2.0
+langchain-docling>=0.1.0
+langchain-text-splitters>=0.2.0
+
+# ── Prompt Templating ─────────────────────────────────────────────────────────
+jinja2>=3.1.0
+
+# ── Async I/O ─────────────────────────────────────────────────────────────────
+aiofiles>=23.2.0
+
+# ── Logging ───────────────────────────────────────────────────────────────────
+python-json-logger>=2.0.7

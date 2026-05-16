@@ -1,0 +1,5 @@
+{% for doc in documents %}
+[Source {{ loop.index }}]
+{{ doc.text | trim }}
+
+{% endfor %}
