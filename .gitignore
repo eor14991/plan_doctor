@@ -85,11 +85,10 @@ dmypy.json
 # -----------------------------------------------------------------------------
 # Project-specific storage (runtime data, not source)
 # -----------------------------------------------------------------------------
-storage/
+storage/*
 !storage/.gitkeep
-src/core/ports/storage/*
-!src/core/ports/storage/.gitkeep
-
+!src/core/ports/storage/*
+!src/adapters/storage/*
 # -----------------------------------------------------------------------------
 # IDEs
 # -----------------------------------------------------------------------------
