@@ -7,6 +7,7 @@ All methods accept and return the Chat domain entity or Python primitives.
 No Firestore types, ObjectId, or SDK-specific constructs appear in this
 interface. The FirebaseChatRepository adapter handles all translation.
 """
+
 from abc import ABC, abstractmethod
 from typing import Optional
 

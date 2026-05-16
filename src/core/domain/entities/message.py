@@ -18,6 +18,7 @@ prompt. This string is what gets embedded and used for Qdrant retrieval,
 allowing the system to search the knowledge base using the full context of
 what the user communicated, including the ML detection result.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -29,7 +30,7 @@ from pydantic import BaseModel, Field
 class Message(BaseModel):
     message_id: Optional[str] = Field(default=None)
     chat_id: str = Field(...)
-    role: Literal["user", "assistant","system"]
+    role: Literal["user", "assistant", "system"]
     prompt: Optional[str] = Field(default=None)
     rag_response: Optional[str] = Field(default=None)
     image_url: Optional[str] = Field(default=None)

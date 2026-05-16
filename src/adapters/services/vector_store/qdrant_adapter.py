@@ -4,14 +4,17 @@ DEFECT #10 FIX: No `from pymongo import MongoClient` (was in original QdrantDBPr
 DEFECT #3 FIX: db_path passed in by Container, not pulled from BaseController.
 search_by_vector returns list[RetrievedDocument] — domain type, not ScoredPoint.
 """
+
 from __future__ import annotations
+
 import logging
 import uuid
 from typing import Optional
-from qdrant_client import QdrantClient, models
-from ....core.ports.services.i_vector_store import IVectorStore
-from ....core.domain.value_objects.retrieved_document import RetrievedDocument
 
+from qdrant_client import QdrantClient, models
+
+from ....core.domain.value_objects.retrieved_document import RetrievedDocument
+from ....core.ports.services.i_vector_store import IVectorStore
 
 logger = logging.getLogger(__name__)
 _DISTANCE_MAP = {"cosine": models.Distance.COSINE, "dot": models.Distance.DOT}
@@ -40,18 +43,19 @@ class QdrantAdapter(IVectorStore):
                 points_selector=models.Filter(
                     must=[
                         models.FieldCondition(
-                            key=filter_key,
-                            match=models.MatchValue(value=filter_value)
+                            key=filter_key, match=models.MatchValue(value=filter_value)
                         )
                     ]
-                )
+                ),
             )
             return True
         except Exception:
             logger.error("delete_by_filter failed", exc_info=True)
             return False
 
-    def create_collection(self, collection_name: str, embedding_size: int, do_reset: bool = False) -> bool:
+    def create_collection(
+        self, collection_name: str, embedding_size: int, do_reset: bool = False
+    ) -> bool:
         assert self._client
         try:
             if do_reset:
@@ -59,11 +63,15 @@ class QdrantAdapter(IVectorStore):
             if not self.collection_exists(collection_name):
                 self._client.create_collection(
                     collection_name=collection_name,
-                    vectors_config=models.VectorParams(size=embedding_size, distance=self._distance),
+                    vectors_config=models.VectorParams(
+                        size=embedding_size, distance=self._distance
+                    ),
                 )
             return True
         except Exception:
-            logger.error("create_collection failed", extra={"collection": collection_name}, exc_info=True)
+            logger.error(
+                "create_collection failed", extra={"collection": collection_name}, exc_info=True
+            )
             return False
 
     def delete_collection(self, collection_name: str) -> bool:
@@ -80,30 +88,48 @@ class QdrantAdapter(IVectorStore):
         assert self._client
         return self._client.collection_exists(collection_name=collection_name)
 
-    def insert_many(self, collection_name: str, texts: list[str], vectors: list[list[float]],
-                    metadata: Optional[list[dict]] = None, batch_size: int = 50) -> bool:
+    def insert_many(
+        self,
+        collection_name: str,
+        texts: list[str],
+        vectors: list[list[float]],
+        metadata: Optional[list[dict]] = None,
+        batch_size: int = 50,
+    ) -> bool:
         assert self._client
         if not self.collection_exists(collection_name):
             return False
         meta = metadata or [{} for _ in texts]
         points = [
-            models.PointStruct(id=str(uuid.uuid4()), vector=vectors[i],
-                               payload={"text": texts[i], "metadata": meta[i]})
+            models.PointStruct(
+                id=str(uuid.uuid4()),
+                vector=vectors[i],
+                payload={"text": texts[i], "metadata": meta[i]},
+            )
             for i in range(len(texts))
         ]
         try:
-            self._client.upload_points(collection_name=collection_name, points=points, batch_size=batch_size)
+            self._client.upload_points(
+                collection_name=collection_name, points=points, batch_size=batch_size
+            )
             return True
         except Exception:
             logger.error("insert_many failed", exc_info=True)
             return False
 
-    def search_by_vector(self, collection_name: str, query_vector: list[float], limit: int) -> list[RetrievedDocument]:
+    def search_by_vector(
+        self, collection_name: str, query_vector: list[float], limit: int
+    ) -> list[RetrievedDocument]:
         assert self._client
         try:
-            pts = self._client.query_points(collection_name=collection_name, query=query_vector, limit=limit).points
-            return [RetrievedDocument(text=p.payload.get("text", ""), score=float(p.score))
-                    for p in pts if p.payload]
+            pts = self._client.query_points(
+                collection_name=collection_name, query=query_vector, limit=limit
+            ).points
+            return [
+                RetrievedDocument(text=p.payload.get("text", ""), score=float(p.score))
+                for p in pts
+                if p.payload
+            ]
         except Exception:
             logger.error("search_by_vector failed", exc_info=True)
             return []

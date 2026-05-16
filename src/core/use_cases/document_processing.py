@@ -19,6 +19,7 @@ Dependency audit:
     delegated to abstract ports. The use case can be tested with in-memory
     fakes without any external services.
 """
+
 from __future__ import annotations
 
 import logging
@@ -121,10 +122,7 @@ class DocumentProcessingUseCase:
         ]
 
         # Insert into Qdrant.
-        metadata_list = [
-            {"doc_id": c.doc_id, "order": c.chunk_order}
-            for c in chunk_entities
-        ]
+        metadata_list = [{"doc_id": c.doc_id, "order": c.chunk_order} for c in chunk_entities]
         self._vector_store.insert_many(
             collection_name=_KNOWLEDGE_COLLECTION,
             texts=texts,

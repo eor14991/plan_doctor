@@ -27,7 +27,7 @@ class GroqGenerationAdapter(IGenerationService):
         self._max_chars = default_input_max_characters
         self._max_tokens = default_max_output_tokens
         self._temperature = default_temperature
-        self._client = AsyncOpenAI(api_key=api_key, base_url=api_url,max_retries=0)
+        self._client = AsyncOpenAI(api_key=api_key, base_url=api_url, max_retries=0)
         logger.info("GroqGenerationAdapter ready.", extra={"model_id": model_id})
 
     async def _call_api(self, **kwargs) -> object:
@@ -44,7 +44,7 @@ class GroqGenerationAdapter(IGenerationService):
             except RateLimitError:
                 if attempt == max_retries - 1:
                     raise
-                delay = (base_delay * 2 ** attempt) + random.uniform(0, 1)
+                delay = (base_delay * 2**attempt) + random.uniform(0, 1)
                 logger.warning(
                     "Groq rate limit hit, backing off.",
                     extra={"attempt": attempt + 1, "delay_seconds": round(delay, 2)},

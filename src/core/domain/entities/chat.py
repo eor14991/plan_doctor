@@ -13,6 +13,7 @@ The needs_summarization property allows the router to determine whether to
 schedule a background summarization task after each message, without
 containing any of that logic itself.
 """
+
 from __future__ import annotations
 
 from datetime import datetime, timezone
@@ -41,7 +42,4 @@ class Chat(BaseModel):
         The threshold is checked as a modulo condition so that summarization
         triggers every N messages rather than only at the first multiple of N.
         """
-        return (
-            self.message_count > 0
-            and self.message_count % self.summarize_every_n_messages == 0
-        )
+        return self.message_count > 0 and self.message_count % self.summarize_every_n_messages == 0

@@ -10,6 +10,7 @@ The chunk_order field records the position of this chunk within the source
 document. It is used to reconstruct surrounding context when needed and to
 detect whether re-processing a document produced the same segmentation.
 """
+
 from __future__ import annotations
 
 from typing import Any, Dict, Optional

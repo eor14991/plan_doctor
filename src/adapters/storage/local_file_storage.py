@@ -15,6 +15,7 @@ Replaceability:
     S3StorageAdapter in the Container without changing any use case code,
     provided the new adapter implements IFileStorage.
 """
+
 from __future__ import annotations
 
 import logging

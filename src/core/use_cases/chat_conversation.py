@@ -5,6 +5,7 @@ import logging
 import time
 from typing import Optional
 
+from ...infrastructure.prompt_builder import PromptBuilder
 from ..domain.entities.chat import Chat
 from ..domain.entities.message import Message
 from ..domain.value_objects import ChatResponse
@@ -13,7 +14,6 @@ from ..ports.repositories.i_message_repository import IMessageRepository
 from ..ports.services.i_embedding_service import DocumentType, IEmbeddingService
 from ..ports.services.i_generation_service import ChatMessage, ChatRole, IGenerationService
 from ..ports.services.i_vector_store import IVectorStore
-from ...infrastructure.prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -48,7 +48,10 @@ class ChatConversationUseCase:
         confidence: Optional[float] = None,
         image_url: Optional[str] = None,
     ) -> tuple[ChatResponse, float]:
-
+        """
+        Orchestrate the RAG conversation pipeline.
+        Returns a tuple of (ChatResponse, total_execution_time).
+        """
         overall_start = time.perf_counter()
 
         # --- 1. DB Initialisation ---
@@ -70,16 +73,14 @@ class ChatConversationUseCase:
             image_url=image_url,
         )
 
-        await asyncio.gather(
+        # Save message and increment count in parallel
+        # Note: increment_message_count returns the NEW count from the DB
+        _, new_count = await asyncio.gather(
             self._message_repo.save(user_message),
             self._chat_repo.increment_message_count(chat_id),
         )
 
-        new_count = (chat.message_count or 0) + 1
-
-        needs_summarization = (
-            new_count > 0 and new_count % chat.summarize_every_n_messages == 0
-        )
+        needs_summarization = new_count > 0 and new_count % chat.summarize_every_n_messages == 0
         time_db_init = time.perf_counter() - t_start
 
         query_text = user_message.display_text
@@ -110,6 +111,7 @@ class ChatConversationUseCase:
         )
         time_vector = time.perf_counter() - t_start
 
+        # Render prompts
         doc_ctx = self._prompt_builder.render(
             "rag_document_context",
             {"documents": retrieved_docs},
@@ -136,7 +138,10 @@ class ChatConversationUseCase:
         if not answer:
             logger.error("Generation returned None.", extra={"chat_id": chat_id})
             return (
-                ChatResponse(answer="Sorry, I could not generate a response. Please try again.", sources=[]),
+                ChatResponse(
+                    answer="Sorry, I could not generate a response. Please try again.",
+                    sources=[],
+                ),
                 time.perf_counter() - overall_start,
             )
 
@@ -187,10 +192,12 @@ class ChatConversationUseCase:
         history = [system_msg]
 
         if chat.summary:
-            history.append(ChatMessage(
-                role=ChatRole.ASSISTANT,
-                content=f"[Summary of previous conversation]: {chat.summary}",
-            ))
+            history.append(
+                ChatMessage(
+                    role=ChatRole.ASSISTANT,
+                    content=f"[Summary of previous conversation]: {chat.summary}",
+                )
+            )
         else:
             recent = await self._message_repo.get_recent_n(chat.chat_id, n=5)
             for msg in recent:
@@ -208,10 +215,6 @@ class ChatConversationUseCase:
 
         When a disease label is present it is appended in both its original
         form and as a readable phrase. BAAI/bge-m3 handles the rest.
-
-        Examples:
-            "my plant has spots" + "Tomato___Bacterial_spot"
-            → "my plant has spots Tomato Bacterial spot"
         """
         parts = [query_text]
         if label:
@@ -222,7 +225,10 @@ class ChatConversationUseCase:
     async def create_chat(self, user_id: str, chat_id: str, title: str = "New Diagnosis") -> Chat:
         chat = Chat(user_id=user_id, title=title, chat_id=chat_id)
         saved = await self._chat_repo.save(chat)
-        logger.info("Chat session created.", extra={"chat_id": saved.chat_id, "user_id": user_id})
+        logger.info(
+            "Chat session created.",
+            extra={"chat_id": saved.chat_id, "user_id": user_id},
+        )
         return saved
 
     async def get_history(self, chat_id: str, limit: int = 5) -> list[Message]:

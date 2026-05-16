@@ -4,15 +4,19 @@ ONLY file in the production system that imports transformers and langchain.
 Defect #8 fix: tokenizer loaded once in __init__, never per-request.
 Returns RawDocumentChunk (domain value objects), never langchain Documents.
 """
+
 from __future__ import annotations
+
 import logging
 import os
 from typing import Optional
+
 from langchain_community.document_loaders import TextLoader
 from langchain_core.document_loaders.base import BaseLoader
 from langchain_core.documents import Document
 from langchain_text_splitters import MarkdownHeaderTextSplitter, RecursiveCharacterTextSplitter
 from transformers import AutoTokenizer
+
 from ....core.domain.value_objects.raw_document_chunk import RawDocumentChunk
 from ....core.ports.services.i_document_chunker import IDocumentChunker
 
@@ -27,7 +31,9 @@ class TokenizerDocumentChunker(IDocumentChunker):
         self._tokenizer.model_max_length = 8192
         logger.info("Tokenizer ready")
 
-    def load_and_split(self, file_path: str, file_id: str, chunk_size: int, overlap_size: int) -> list[RawDocumentChunk]:
+    def load_and_split(
+        self, file_path: str, file_id: str, chunk_size: int, overlap_size: int
+    ) -> list[RawDocumentChunk]:
         loader = self._build_loader(file_path)
         if loader is None:
             return []
@@ -39,14 +45,21 @@ class TokenizerDocumentChunker(IDocumentChunker):
         if not raw_docs:
             return []
         lc_chunks = self._split(raw_docs, file_id, chunk_size, overlap_size)
-        return [RawDocumentChunk(text=d.page_content, metadata=d.metadata,order=i)
-                for i,d in enumerate(lc_chunks) if d.page_content.strip()]
+        return [
+            RawDocumentChunk(text=d.page_content, metadata=d.metadata, order=i)
+            for i, d in enumerate(lc_chunks)
+            if d.page_content.strip()
+        ]
 
-    def _split(self, docs: list[Document], file_id: str, chunk_size: int, overlap_size: int) -> list[Document]:
+    def _split(
+        self, docs: list[Document], file_id: str, chunk_size: int, overlap_size: int
+    ) -> list[Document]:
         text = "\n\n".join(d.page_content for d in docs)
         md_split = MarkdownHeaderTextSplitter(headers_to_split_on=_MD_HEADERS, strip_headers=False)
         txt_split = RecursiveCharacterTextSplitter.from_huggingface_tokenizer(
-            self._tokenizer, chunk_size=chunk_size, chunk_overlap=overlap_size,
+            self._tokenizer,
+            chunk_size=chunk_size,
+            chunk_overlap=overlap_size,
             separators=["\n\n", "\n", " ", ""],
         )
         try:
@@ -73,11 +86,16 @@ class TokenizerDocumentChunker(IDocumentChunker):
                 from docling.datamodel.pipeline_options import PdfPipelineOptions
                 from docling.document_converter import DocumentConverter, PdfFormatOption
                 from langchain_docling.loader import DoclingLoader
+
                 opts = PdfPipelineOptions()
                 opts.do_ocr = True
                 opts.do_table_structure = True
-                return DoclingLoader(file_path, converter=DocumentConverter(
-                    format_options={"pdf": PdfFormatOption(pipeline_options=opts)}))
+                return DoclingLoader(
+                    file_path,
+                    converter=DocumentConverter(
+                        format_options={"pdf": PdfFormatOption(pipeline_options=opts)}
+                    ),
+                )
             except ImportError:
                 logger.error("langchain-docling not installed")
                 return None

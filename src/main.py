@@ -12,15 +12,19 @@ Routers:
     /upload      - Web portal file upload endpoints.
     /processing  - Web portal document processing endpoints.
 """
+
 from __future__ import annotations
 
 from fastapi import FastAPI
-from .api.dependencies import get_current_user_id
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.middleware import SlowAPIMiddleware
 
+from .api.dependencies import get_current_user_id, limiter
 from .api.lifespan import lifespan
 from .api.routers.chat import chat_router
-from .api.routers.upload import upload_router
 from .api.routers.processing import processing_router
+from .api.routers.upload import upload_router
 
 
 def create_app() -> FastAPI:
@@ -34,13 +38,20 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
+    application.state.limiter = limiter
+    application.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    application.add_middleware(SlowAPIMiddleware)
+
     application.dependency_overrides[get_current_user_id] = lambda: "test_user_123"
     application.include_router(chat_router)
     application.include_router(upload_router)
     application.include_router(processing_router)
 
+    @application.get("/")
+    async def root():
+        return {"status": "ok"}
+
     return application
 
 
-# Module-level instance for Uvicorn: uvicorn src.main:app --reload
 app = create_app()

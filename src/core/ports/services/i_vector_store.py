@@ -10,6 +10,7 @@ implementation. All methods are synchronous because the Qdrant local-mode
 client is synchronous and wrapping it in async without an executor would
 be misleading.
 """
+
 from abc import ABC, abstractmethod
 from typing import Optional
 
@@ -25,18 +26,29 @@ class IVectorStore(ABC):
     def disconnect(self) -> None: ...
 
     @abstractmethod
-    def create_collection(self, collection_name: str, embedding_size: int, do_reset: bool = False) -> bool: ...
+    def create_collection(
+        self, collection_name: str, embedding_size: int, do_reset: bool = False
+    ) -> bool: ...
 
     @abstractmethod
-    def insert_many(self, collection_name: str, texts: list[str], vectors: list[list[float]],
-                    metadata: Optional[list[dict]] = None, batch_size: int = 50) -> bool: ...
+    def insert_many(
+        self,
+        collection_name: str,
+        texts: list[str],
+        vectors: list[list[float]],
+        metadata: Optional[list[dict]] = None,
+        batch_size: int = 50,
+    ) -> bool: ...
 
     @abstractmethod
-    def search_by_vector(self, collection_name: str, query_vector: list[float], limit: int) -> list[
-        RetrievedDocument]: ...
+    def search_by_vector(
+        self, collection_name: str, query_vector: list[float], limit: int
+    ) -> list[RetrievedDocument]: ...
 
     @abstractmethod
-    def delete_by_filter(self, collection_name: str, filter_key: str, filter_value: str) -> bool: ...
+    def delete_by_filter(
+        self, collection_name: str, filter_key: str, filter_value: str
+    ) -> bool: ...
 
     @abstractmethod
     def collection_exists(self, collection_name: str) -> bool: ...

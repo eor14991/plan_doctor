@@ -14,6 +14,7 @@ Merging them into one interface would force GrokAdapter to stub out
 summarize() and HuggingFaceAdapter to stub out generate_text(), both of
 which are ISP violations.
 """
+
 from abc import ABC, abstractmethod
 
 

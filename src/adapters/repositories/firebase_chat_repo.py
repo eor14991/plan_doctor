@@ -18,6 +18,7 @@ Field naming convention:
     snake_case domain entities and camelCase Firestore documents so that
     no other layer is aware of the naming difference.
 """
+
 from __future__ import annotations
 
 import logging
@@ -40,7 +41,9 @@ class FirebaseChatRepository(IChatRepository):
         self._db = db
         self._col = db.collection(_COLLECTION)
 
-    async def get_by_user_id(self, user_id: str, page_number: int = 1, page_size: int = 20) -> list[Chat]:
+    async def get_by_user_id(
+        self, user_id: str, page_number: int = 1, page_size: int = 20
+    ) -> list[Chat]:
         offset = (page_number - 1) * page_size
         docs = (
             self._col.where("userId", "==", user_id)
@@ -71,6 +74,12 @@ class FirebaseChatRepository(IChatRepository):
         If chat.chat_id is already set the document is overwritten at that
         identifier. If it is None, Firestore generates a new document ID
         which is then written back to chat.chat_id before returning.
+
+        Args:
+            chat: The Chat entity to persist.
+
+        Returns:
+            The same Chat instance with chat_id populated.
         """
         data = self._to_firestore(chat)
         if chat.chat_id:
@@ -103,22 +112,41 @@ class FirebaseChatRepository(IChatRepository):
             True on success. False if the update raised an exception.
         """
         try:
-            await self._col.document(chat_id).update({
-                "summary": summary,
-                "updatedAt": datetime.now(timezone.utc),
-            })
+            await self._col.document(chat_id).update(
+                {
+                    "summary": summary,
+                    "updatedAt": datetime.now(timezone.utc),
+                }
+            )
             return True
         except Exception:
-            logger.error("Failed to update chat summary.", extra={"chat_id": chat_id}, exc_info=True)
+            logger.error(
+                "Failed to update chat summary.",
+                extra={"chat_id": chat_id},
+                exc_info=True,
+            )
             return False
 
-    async def increment_message_count(self, chat_id: str) -> None:
-        await self._col.document(chat_id).update({
-            "messageCount": firestore.Increment(1),
-            "updatedAt": datetime.now(timezone.utc),
-        })
+    async def increment_message_count(self, chat_id: str) -> int:
+        """
+        Atomically increment the messageCount field by 1 and return the new value.
 
+        Uses Firestore's server-side Increment transform so that concurrent
+        increments from multiple requests are safe without requiring a
+        read-modify-write transaction.
 
+        Returns:
+            The updated message count, or 0 if the document does not exist.
+        """
+        ref = self._col.document(chat_id)
+        await ref.update(
+            {
+                "messageCount": firestore.Increment(1),
+                "updatedAt": datetime.now(timezone.utc),
+            }
+        )
+        doc = await ref.get(field_paths=["messageCount"])
+        return doc.to_dict().get("messageCount", 0) if doc.exists else 0
 
     @staticmethod
     def _to_firestore(chat: Chat) -> dict:

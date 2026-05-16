@@ -16,6 +16,7 @@ File validation:
     not here. The router's only responsibility is reading the file bytes from
     the UploadFile object and forwarding them to the use case.
 """
+
 from __future__ import annotations
 
 import logging
@@ -23,8 +24,8 @@ import logging
 from fastapi import APIRouter, Depends, UploadFile, status
 from fastapi.responses import JSONResponse
 
-from ..dependencies import get_current_user_id, get_document_upload_use_case
 from ...core.use_cases.document_upload import DocumentUploadUseCase
+from ..dependencies import get_current_user_id, get_document_upload_use_case
 
 logger = logging.getLogger(__name__)
 

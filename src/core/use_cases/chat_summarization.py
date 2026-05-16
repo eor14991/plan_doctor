@@ -21,6 +21,7 @@ Summarization model:
     LLM (Grok/Cohere). BART is trained specifically for abstractive
     summarization, is faster for this task, and incurs no per-token API cost.
 """
+
 from __future__ import annotations
 
 import logging

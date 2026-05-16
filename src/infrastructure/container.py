@@ -9,6 +9,7 @@ Startup order is deterministic. Each step depends only on what was
 constructed in previous steps, so the order can be reasoned about by
 reading build() top to bottom.
 """
+
 from __future__ import annotations
 
 import logging
@@ -16,29 +17,25 @@ import os
 from dataclasses import dataclass, field
 from typing import Optional
 
-from .config import Settings
-from .prompt_builder import PromptBuilder
-from .firebase_client import get_firestore_client, initialize_firebase
-
 from ..adapters.repositories.firebase_chat_repo import FirebaseChatRepository
-from ..adapters.repositories.firebase_message_repo import FirebaseMessageRepository
-from ..adapters.repositories.firebase_document_repo import FirebaseDocumentRepository
 from ..adapters.repositories.firebase_chunk_repo import FirebaseChunkRepository
-
-from ..adapters.services.embedding.sentence_transformer_adapter import SentenceTransformerAdapter
-from ..adapters.services.vector_store.qdrant_adapter import QdrantAdapter
+from ..adapters.repositories.firebase_document_repo import FirebaseDocumentRepository
+from ..adapters.repositories.firebase_message_repo import FirebaseMessageRepository
 from ..adapters.services.chunking.tokenizer_chunker import TokenizerDocumentChunker
-from ..adapters.services.summarization.huggingface_summarizer import HuggingFaceSummarizationService
-from ..adapters.services.generation.groq_adapter import GroqGenerationAdapter
+from ..adapters.services.embedding.sentence_transformer_adapter import SentenceTransformerAdapter
 from ..adapters.services.generation.cohere_adapter import CohereGenerationAdapter
+from ..adapters.services.generation.groq_adapter import GroqGenerationAdapter
+from ..adapters.services.summarization.huggingface_summarizer import HuggingFaceSummarizationService
+from ..adapters.services.vector_store.qdrant_adapter import QdrantAdapter
 from ..adapters.storage.local_file_storage import LocalFileStorageAdapter
-
 from ..core.ports.services.i_generation_service import IGenerationService
-
-from ..core.use_cases.document_upload import DocumentUploadUseCase
-from ..core.use_cases.document_processing import DocumentProcessingUseCase
 from ..core.use_cases.chat_conversation import ChatConversationUseCase
 from ..core.use_cases.chat_summarization import ChatSummarizationUseCase
+from ..core.use_cases.document_processing import DocumentProcessingUseCase
+from ..core.use_cases.document_upload import DocumentUploadUseCase
+from .config import Settings
+from .firebase_client import get_firestore_client, initialize_firebase
+from .prompt_builder import PromptBuilder
 
 logger = logging.getLogger(__name__)
 
@@ -113,19 +110,21 @@ class Container:
         # Step 4: Tokenizer for document chunking — same model ID as embedder.
         c.chunker = TokenizerDocumentChunker(model_id=settings.EMBEDDING_MODEL_ID)
 
-        c.prompt_builder = PromptBuilder(language=settings.PRIMARY_LANG, default_language=settings.DEFAULT_LANG)
+        c.prompt_builder = PromptBuilder(
+            language=settings.PRIMARY_LANG, default_language=settings.DEFAULT_LANG
+        )
 
         # Step 5: Summarization model — loaded once, never per request.
-        logger.info("Loading summarization model.", extra={"model_id": settings.SUMMARIZATION_MODEL_ID})
+        logger.info(
+            "Loading summarization model.", extra={"model_id": settings.SUMMARIZATION_MODEL_ID}
+        )
         c.summarizer = HuggingFaceSummarizationService(model_id=settings.SUMMARIZATION_MODEL_ID)
 
         # Step 6: Generation service adapter.
         c.generator = cls._build_generator(settings)
 
         # Step 7: Qdrant vector store.
-        db_path = os.path.abspath(
-            os.path.join(settings.VECTOR_DB_PATH, settings.VECTOR_DB_BACKEND)
-        )
+        db_path = os.path.abspath(os.path.join(settings.VECTOR_DB_PATH, settings.VECTOR_DB_BACKEND))
         os.makedirs(db_path, exist_ok=True)
         c.vector_store = QdrantAdapter(
             db_path=db_path,
@@ -159,7 +158,7 @@ class Container:
             generation_service=c.generator,
             knowledge_collection=settings.KNOWLEDGE_COLLECTION,
             rag_top_k=settings.RAG_TOP_K,
-            prompt_builder=c.prompt_builder
+            prompt_builder=c.prompt_builder,
         )
         c.chat_summarization = ChatSummarizationUseCase(
             chat_repo=c.chat_repo,

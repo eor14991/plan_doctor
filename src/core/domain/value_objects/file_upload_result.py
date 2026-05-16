@@ -1,5 +1,7 @@
 """Value Object: FileValidationResult — command result object for DataIngestionUseCase."""
+
 from typing import Optional
+
 from pydantic import BaseModel, Field
 
 

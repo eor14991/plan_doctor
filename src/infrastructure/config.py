@@ -14,6 +14,7 @@ Firebase credential resolution:
 The @lru_cache decorator on get_settings() ensures the .env file is read
 exactly once for the lifetime of the process.
 """
+
 from __future__ import annotations
 
 import os
@@ -50,7 +51,7 @@ class Settings(BaseSettings):
     UPLOAD_BASE_DIR: str = "./storage/uploads"
 
     # ── Generation ──────────────────────────────────────────────────────────
-    ACTIVE_GENERATION_BACKEND: Literal["GROQ", "COHERE"] = "GROQ"   # ← was "GROK"
+    ACTIVE_GENERATION_BACKEND: Literal["GROQ", "COHERE"] = "GROQ"  # ← was "GROK"
     GROQ_API_KEY: str
     GROQ_API_URL: str = "https://api.groq.com/openai/v1"
     GROQ_GENERATION_MODEL: str = "openai/gpt-oss-120b"

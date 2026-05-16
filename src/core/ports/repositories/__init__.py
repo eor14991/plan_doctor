@@ -1,4 +1,4 @@
-from .i_document_repository import IDocumentRepository
-from .i_chunk_repository import IChunkRepository
-from .i_message_repository import IMessageRepository
 from .i_chat_repository import IChatRepository
+from .i_chunk_repository import IChunkRepository
+from .i_document_repository import IDocumentRepository
+from .i_message_repository import IMessageRepository

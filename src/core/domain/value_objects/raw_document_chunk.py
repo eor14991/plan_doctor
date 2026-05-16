@@ -10,6 +10,7 @@ identifiers (doc_id, chunk_id) or make persistence decisions. The use case
 receives RawDocumentChunk objects and constructs DataChunk entities with the
 correct identifiers before delegating to the chunk repository.
 """
+
 from pydantic import BaseModel, Field
 
 

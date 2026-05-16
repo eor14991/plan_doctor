@@ -22,21 +22,21 @@ Background tasks:
     is returned immediately without making the client wait for chunking and
     embedding to complete.
 """
+
 from __future__ import annotations
 
 import logging
 
 from fastapi import APIRouter, BackgroundTasks, Depends, status
 from fastapi.responses import JSONResponse
-from ..schemas import ProcessingRequest
 
-from ..dependencies import get_current_user_id, get_document_processing_use_case
 from ...core.use_cases.document_processing import DocumentProcessingUseCase
+from ..dependencies import get_current_user_id, get_document_processing_use_case
+from ..schemas import ProcessingRequest
 
 logger = logging.getLogger(__name__)
 
 processing_router = APIRouter(prefix="/processing", tags=["processing"])
-
 
 
 @processing_router.post("/{doc_id}", status_code=status.HTTP_202_ACCEPTED)

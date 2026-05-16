@@ -19,6 +19,7 @@ Security note:
     Swapping the credential source requires only a change to this module and
     the Settings class, with no impact on any other layer.
 """
+
 from __future__ import annotations
 
 import json
@@ -67,9 +68,7 @@ def initialize_firebase(
     if service_account_file:
         resolved_path = os.path.abspath(service_account_file)
         if not os.path.exists(resolved_path):
-            raise FileNotFoundError(
-                f"Firebase service account file not found: {resolved_path}"
-            )
+            raise FileNotFoundError(f"Firebase service account file not found: {resolved_path}")
         cred = credentials.Certificate(resolved_path)
         logger.info("Firebase initialised from file.", extra={"path": resolved_path})
     elif service_account_json:
@@ -116,4 +115,5 @@ def verify_firebase_token(id_token: str) -> dict:
             or the signature is invalid.
     """
     from firebase_admin import auth
+
     return auth.verify_id_token(id_token)

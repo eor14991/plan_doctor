@@ -13,6 +13,7 @@ Design decision: save_bytes() vs save_stream():
     testing because tests can pass a literal bytes value without constructing
     a BinaryIO mock.
 """
+
 from abc import ABC, abstractmethod
 
 

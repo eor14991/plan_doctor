@@ -28,6 +28,7 @@ Retrieval ordering:
     is more efficient with the newest documents first, while the LLM context
     window requires chronological (oldest first) ordering.
 """
+
 from __future__ import annotations
 
 import logging
@@ -51,8 +52,7 @@ class FirebaseMessageRepository(IMessageRepository):
     def _messages_col(self, chat_id: str):
         """Return a reference to the messages sub-collection for a given chat."""
         return (
-            self._db
-            .collection(_CHATS_COLLECTION)
+            self._db.collection(_CHATS_COLLECTION)
             .document(chat_id)
             .collection(_MESSAGES_SUBCOLLECTION)
         )
@@ -99,12 +99,7 @@ class FirebaseMessageRepository(IMessageRepository):
             A list of Message entities ordered from oldest to newest.
         """
         col = self._messages_col(chat_id)
-        docs = (
-            col
-            .order_by("timestamp", direction=firestore.Query.DESCENDING)
-            .limit(n)
-            .stream()
-        )
+        docs = col.order_by("timestamp", direction=firestore.Query.DESCENDING).limit(n).stream()
         messages = []
         async for doc in docs:
             messages.append(self._to_entity(doc.id, chat_id, doc.to_dict()))
@@ -112,7 +107,9 @@ class FirebaseMessageRepository(IMessageRepository):
         messages.reverse()
         return messages
 
-    async def get_by_chat_id(self, chat_id: str, page_number: int = 1, page_size: int = 20) -> list[Message]:
+    async def get_by_chat_id(
+        self, chat_id: str, page_number: int = 1, page_size: int = 20
+    ) -> list[Message]:
         col = self._messages_col(chat_id)
         offset = (page_number - 1) * page_size
         docs = (

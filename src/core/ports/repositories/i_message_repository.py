@@ -9,6 +9,7 @@ get_recent_n() and get_by_chat_id() serve different use cases:
     get_by_chat_id()   - Returns a paginated list for the history endpoint.
                          Intended for client display rather than LLM context.
 """
+
 from abc import ABC, abstractmethod
 
 from ...domain.entities.message import Message

@@ -23,6 +23,7 @@ Bulk delete strategy:
     document, the repository first streams the matching document references and
     then deletes them in batches using the same WriteBatch mechanism.
 """
+
 from __future__ import annotations
 
 import logging
@@ -46,7 +47,9 @@ class FirebaseChunkRepository(IChunkRepository):
         self._db = db
         self._col = db.collection(_COLLECTION)
 
-    async def get_by_doc_id(self, doc_id: str, page_number: int = 1, page_size: int = 50) -> List[DataChunk]:
+    async def get_by_doc_id(
+        self, doc_id: str, page_number: int = 1, page_size: int = 50
+    ) -> List[DataChunk]:
         """
         Retrieve chunks for a given document with pagination, ordered by their
         chunk order so they can be reassembled or read chronologically.
@@ -66,7 +69,9 @@ class FirebaseChunkRepository(IChunkRepository):
 
         return chunks
 
-    async def insert_bulk(self, chunks: list[DataChunk], batch_size: int = _FIRESTORE_BATCH_LIMIT) -> int:
+    async def insert_bulk(
+        self, chunks: list[DataChunk], batch_size: int = _FIRESTORE_BATCH_LIMIT
+    ) -> int:
         """
         Insert a list of DataChunk entities in batches using Firestore WriteBatch.
 
@@ -84,18 +89,21 @@ class FirebaseChunkRepository(IChunkRepository):
         """
         total = 0
         for i in range(0, len(chunks), batch_size):
-            batch_chunks = chunks[i: i + batch_size]
+            batch_chunks = chunks[i : i + batch_size]
             batch = self._db.batch()
 
             for chunk in batch_chunks:
                 doc_ref = self._col.document()
-                batch.set(doc_ref, {
-                    "docId": chunk.doc_id,
-                    "chunkText": chunk.chunk_text,
-                    "chunkOrder": chunk.chunk_order,
-                    "chunkMetadata": chunk.chunk_metadata,
-                    "createdAt": datetime.now(timezone.utc),
-                })
+                batch.set(
+                    doc_ref,
+                    {
+                        "docId": chunk.doc_id,
+                        "chunkText": chunk.chunk_text,
+                        "chunkOrder": chunk.chunk_order,
+                        "chunkMetadata": chunk.chunk_metadata,
+                        "createdAt": datetime.now(timezone.utc),
+                    },
+                )
 
             try:
                 await batch.commit()
@@ -161,5 +169,5 @@ class FirebaseChunkRepository(IChunkRepository):
             doc_id=data.get("docId", ""),
             chunk_text=data.get("chunkText", ""),
             chunk_order=data.get("chunkOrder", 0),
-            chunk_metadata=data.get("chunkMetadata", {})
+            chunk_metadata=data.get("chunkMetadata", {}),
         )

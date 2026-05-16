@@ -7,6 +7,7 @@ Carries the generated summary text, the number of messages that were
 included in the input, and a success flag indicating whether the summary
 was successfully persisted to the Chat document in Firestore.
 """
+
 from pydantic import BaseModel, Field
 
 

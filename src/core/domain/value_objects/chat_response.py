@@ -12,6 +12,7 @@ incremented message count. The router reads this flag to decide whether to
 schedule a background summarization task, eliminating the need for a second
 Firestore read after execute() returns.
 """
+
 from pydantic import BaseModel, Field
 
 from .retrieved_document import RetrievedDocument

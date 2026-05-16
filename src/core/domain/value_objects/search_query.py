@@ -1,4 +1,5 @@
 """Value Object: SearchQuery — immutable, bounded limit enforced."""
+
 from pydantic import BaseModel, Field
 
 

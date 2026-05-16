@@ -16,6 +16,7 @@ The status field is the primary signal used by the web portal to track
 progress. The processing use case updates it via update_status() at each
 stage of the pipeline rather than rewriting the entire document.
 """
+
 from __future__ import annotations
 
 import logging
@@ -83,9 +84,7 @@ class FirebaseDocumentRepository(IDocumentRepository):
         return self._to_entity(doc.id, doc.to_dict())
 
     async def update_status(
-        self,
-        doc_id: str,
-        status: Literal["uploaded", "processing", "processed", "failed"]
+        self, doc_id: str, status: Literal["uploaded", "processing", "processed", "failed"]
     ) -> bool:
         """
         Update only the status field of an existing document record.
@@ -100,7 +99,9 @@ class FirebaseDocumentRepository(IDocumentRepository):
             await self._col.document(doc_id).update({"status": status})
             return True
         except Exception:
-            logger.error("Failed to update document status.", extra={"doc_id": doc_id}, exc_info=True)
+            logger.error(
+                "Failed to update document status.", extra={"doc_id": doc_id}, exc_info=True
+            )
             return False
 
     async def find_all_by_user(self, user_id: str) -> list[Document]:

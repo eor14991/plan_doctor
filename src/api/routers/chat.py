@@ -20,20 +20,24 @@ Summarization:
     that the response is returned to the client immediately without waiting
     for the summarization model to finish.
 """
+
 from __future__ import annotations
 
 import logging
-
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.responses import JSONResponse
-
-from ..schemas.chat_schemas import MessageRequest, MessageResponse, StartChatRequest
-from ...core.use_cases.chat_conversation import ChatConversationUseCase
-from ...core.use_cases.chat_summarization import ChatSummarizationUseCase
-from ..dependencies import get_chat_use_case, get_current_user_id, get_summarization_use_case
 import time
 
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request, status
+from fastapi.responses import JSONResponse
 
+from ...core.use_cases.chat_conversation import ChatConversationUseCase
+from ...core.use_cases.chat_summarization import ChatSummarizationUseCase
+from ..dependencies import (
+    get_chat_use_case,
+    get_current_user_id,
+    get_summarization_use_case,
+    limiter,
+)
+from ..schemas.chat_schemas import MessageRequest, MessageResponse, StartChatRequest
 
 logger = logging.getLogger(__name__)
 
@@ -52,7 +56,9 @@ async def start_chat(
     The mobile client stores this chat_id and includes it in all subsequent
     message requests for this conversation.
     """
-    saved_chat = await chat_use_case.create_chat(user_id=user_id, title=body.title, chat_id=body.chat_id)
+    saved_chat = await chat_use_case.create_chat(
+        user_id=user_id, title=body.title, chat_id=body.chat_id
+    )
     return JSONResponse(
         status_code=status.HTTP_201_CREATED,
         content={"chat_id": saved_chat.chat_id, "title": saved_chat.title},
@@ -84,7 +90,7 @@ async def send_message(
             detail="At least one of 'prompt' or 'label' must be provided.",
         )
 
-    response, total_time1 = await chat_use_case.execute(
+    response, pipeline_time = await chat_use_case.execute(
         chat_id=chat_id,
         prompt=body.prompt,
         label=body.label,
@@ -96,21 +102,20 @@ async def send_message(
         background_tasks.add_task(summarization_use_case.execute, chat_id=chat_id)
         logger.info("Summarization task scheduled.", extra={"chat_id": chat_id})
 
-
-    # Execute process
     total_time = time.perf_counter() - start
     return JSONResponse(
-    status_code=status.HTTP_200_OK,
-    content={
-        "message": MessageResponse(
-            answer=response.answer,
-            sources_count=len(response.sources),
-            chat_id=chat_id
-        ).model_dump(),
-        "total_time":total_time,
-        "total_time_for pipeline":total_time1
-    }
-)
+        status_code=status.HTTP_200_OK,
+        content={
+            "message": MessageResponse(
+                answer=response.answer,
+                sources_count=len(response.sources),
+                chat_id=chat_id,
+            ).model_dump(),
+            "total_time": total_time,
+            "pipeline_time": pipeline_time,
+        },
+    )
+
 
 @chat_router.get("/{chat_id}/history")
 async def get_chat_history(

@@ -19,6 +19,7 @@ Startup behaviour:
     Container.build() at application startup. Subsequent calls to summarize()
     use the in-memory pipeline with no disk I/O.
 """
+
 from __future__ import annotations
 
 import logging
@@ -31,18 +32,13 @@ logger = logging.getLogger(__name__)
 
 
 class HuggingFaceSummarizationService:
-    def __init__(self,model_id):
+    def __init__(self, model_id):
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
         self.model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
 
-    def summarize(self, text,max_length,
-            min_length):
+    def summarize(self, text, max_length, min_length):
         inputs = self.tokenizer(text, return_tensors="pt", truncation=True)
-        output_ids = self.model.generate(
-            **inputs,
-            min_length=min_length,
-            max_length=max_length
-        )
+        output_ids = self.model.generate(**inputs, min_length=min_length, max_length=max_length)
         return self.tokenizer.decode(output_ids[0], skip_special_tokens=True)
 
     def _load_model(self) -> None:
@@ -53,8 +49,9 @@ class HuggingFaceSummarizationService:
         loaded, because a missing summarization model is a fatal startup error.
         """
         try:
-            from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
             import torch
+            from transformers import AutoModelForSeq2SeqLM, AutoTokenizer
+
             logger.info("Loading summarization model.", extra={"model_id": self._model_id})
             self._tokenizer = AutoTokenizer.from_pretrained(self._model_id)
             self._model = AutoModelForSeq2SeqLM.from_pretrained(self._model_id)
@@ -62,5 +59,3 @@ class HuggingFaceSummarizationService:
         except Exception:
             logger.error("Failed to load summarization model.", exc_info=True)
             raise
-
-

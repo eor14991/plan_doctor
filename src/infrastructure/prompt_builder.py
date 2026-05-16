@@ -4,10 +4,13 @@ REPLACES: TemplateParser with dynamic __import__ + string.Template (security ris
 USES: Jinja2 FileSystemLoader + ChoiceLoader for language fallback.
 StrictUndefined: missing template variables raise UndefinedError immediately.
 """
+
 from __future__ import annotations
+
 import logging
 import os
 from typing import Any
+
 import jinja2
 
 logger = logging.getLogger(__name__)
@@ -47,7 +50,9 @@ class PromptBuilder:
             logger.error("Template not found", extra={"template": template_file})
             raise
         except jinja2.UndefinedError as exc:
-            logger.error("Missing template variable", extra={"template": template_file, "error": str(exc)})
+            logger.error(
+                "Missing template variable", extra={"template": template_file, "error": str(exc)}
+            )
             raise
 
     def set_language(self, language: str) -> None:

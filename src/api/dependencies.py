@@ -18,6 +18,7 @@ Authentication:
     header. It raises HTTP 401 for missing, expired, or invalid tokens.
     get_current_user_id() is a convenience wrapper that extracts only the uid.
 """
+
 from __future__ import annotations
 
 import logging
@@ -25,6 +26,8 @@ from typing import Optional
 
 from fastapi import Depends, HTTPException, Request, Security, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from ..core.use_cases.chat_conversation import ChatConversationUseCase
 from ..core.use_cases.chat_summarization import ChatSummarizationUseCase
@@ -35,7 +38,18 @@ from ..infrastructure.firebase_client import verify_firebase_token
 
 logger = logging.getLogger(__name__)
 
-_security = HTTPBearer(auto_error=False)
+security = HTTPBearer(auto_error=False)
+
+
+def get_limiter_id(request: Request) -> str:
+    """Extract identity for rate limiting, falling back to IP."""
+    user = getattr(request.state, "user", None)
+    if user and isinstance(user, dict):
+        return user.get("uid", get_remote_address(request))
+    return get_remote_address(request)
+
+
+limiter = Limiter(key_func=get_limiter_id, default_limits=["100/minute"])
 
 
 def get_container(request: Request) -> Container:
@@ -43,36 +57,19 @@ def get_container(request: Request) -> Container:
     return request.app.state.container
 
 
-async def get_current_user(
-    credentials: Optional[HTTPAuthorizationCredentials] = Security(_security),
-) -> dict:
-    """
-    Verify the Firebase ID token from the Authorization header and return
-    the decoded token claims.
-
-    The decoded claims dictionary contains at minimum:
-        uid:   str  - The Firebase user identifier.
-        email: str  - The user's email address.
-
-    Raises:
-        HTTPException 401: If the Authorization header is absent, the token
-            has expired, or the token signature is invalid.
-    """
-
+def get_current_user(
+    request: Request, credentials: HTTPAuthorizationCredentials | None = Depends(security)
+):
     if credentials is None:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Authorization token required.",
-        )
+        return None
     try:
-        return verify_firebase_token(credentials.credentials)
-    except Exception as exc:
-        detail = (
-            "Token expired. Please log in again."
-            if "expired" in str(exc).lower()
-            else "Invalid authentication token."
-        )
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=detail)
+        user = auth.verify_id_token(credentials.credentials)
+        request.state.user = user
+        return user
+    except auth.ExpiredIdTokenError:
+        raise HTTPException(status_code=401, detail="Token expired")
+    except auth.InvalidIdTokenError:
+        raise HTTPException(status_code=401, detail="Invalid token")
 
 
 def get_current_user_id(user: dict = Depends(get_current_user)) -> str:

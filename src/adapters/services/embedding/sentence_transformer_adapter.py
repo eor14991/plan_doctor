@@ -6,6 +6,7 @@ Implements IEmbeddingService using a local HuggingFace SentenceTransformer model
 The model is loaded once in __init__ and reused for every call.
 No disk I/O occurs after startup.
 """
+
 from __future__ import annotations
 
 import logging

@@ -18,6 +18,7 @@ Atomicity note:
     orphaned files do not accumulate. The reverse case (disk write failure)
     returns early before any Firestore interaction.
 """
+
 from __future__ import annotations
 
 import logging

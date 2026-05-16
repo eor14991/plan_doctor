@@ -8,6 +8,7 @@ not the length of the input list. If a batch fails partially, the returned
 count will be less than len(chunks), allowing the use case to detect and
 log partial failures accurately.
 """
+
 from abc import ABC, abstractmethod
 from typing import List
 

@@ -11,6 +11,7 @@ database backs the search.
 The score field represents cosine or dot-product similarity as reported by
 the vector store, normalised to the range [0.0, 1.0].
 """
+
 from pydantic import BaseModel, Field
 
 

@@ -17,6 +17,7 @@ Shutdown sequence:
     5. Call Container.shutdown() to disconnect from Qdrant and release any
        other resources held by the container.
 """
+
 from __future__ import annotations
 
 from contextlib import asynccontextmanager
