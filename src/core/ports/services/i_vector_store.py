@@ -50,6 +50,10 @@ class IVectorStore(ABC):
         self, collection_name: str, filter_key: str, filter_value: str
     ) -> bool: ...
 
+    def delete_by_doc_id(self, collection_name: str, doc_id: str) -> None:
+        """Delete all vectors whose metadata doc_id matches."""
+        raise NotImplementedError
+
     @abstractmethod
     def collection_exists(self, collection_name: str) -> bool: ...
 

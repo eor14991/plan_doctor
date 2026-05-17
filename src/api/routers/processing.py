@@ -80,7 +80,7 @@ async def process_batch_document(
 
 
 @processing_router.get("/batch/status")
-async def get_processing_status(
+async def get_batch_processing_status(
         body: ProcessingBatchRequest,
         user_id: str = Depends(get_current_user_id),
         processing_use_case: DocumentProcessingUseCase = Depends(get_document_processing_use_case),
@@ -163,7 +163,7 @@ async def process_document(
 
 
 @processing_router.get("/{doc_id}/status")
-async def get_processing_status(
+async def get_single_processing_status(
     doc_id: str,
     user_id: str = Depends(get_current_user_id),
     processing_use_case: DocumentProcessingUseCase = Depends(get_document_processing_use_case),

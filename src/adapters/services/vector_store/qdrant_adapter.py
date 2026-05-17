@@ -15,20 +15,29 @@ from qdrant_client import QdrantClient, models
 
 from ....core.domain.value_objects.retrieved_document import RetrievedDocument
 from ....core.ports.services.i_vector_store import IVectorStore
+from qdrant_client.http.models import Filter, FieldCondition, MatchValue
 
 logger = logging.getLogger(__name__)
 _DISTANCE_MAP = {"cosine": models.Distance.COSINE, "dot": models.Distance.DOT}
 
 
 class QdrantAdapter(IVectorStore):
-    def __init__(self, db_path: str, distance_method: str = "cosine") -> None:
+    def __init__(self, db_path: str = None,
+                 distance_method: str = "cosine",
+                 host: str = None,  # remote mode
+                 port: int = 6333,
+                 ) -> None:
         self._db_path = db_path
         self._distance = _DISTANCE_MAP.get(distance_method.lower(), models.Distance.COSINE)
         self._client: Optional[QdrantClient] = None
+        self._host = host
+        self._port = port
 
-    def connect(self) -> None:
-        self._client = QdrantClient(path=self._db_path)
-        logger.info("Qdrant connected", extra={"db_path": self._db_path})
+    def connect(self):
+        if self._host:
+            self._client = QdrantClient(host=self._host, port=self._port)
+        else:
+            self._client = QdrantClient(path=self._db_path)
 
     def disconnect(self) -> None:
         if self._client:
@@ -52,6 +61,18 @@ class QdrantAdapter(IVectorStore):
         except Exception:
             logger.error("delete_by_filter failed", exc_info=True)
             return False
+
+
+    def delete_by_doc_id(self, collection_name: str, doc_id: str) -> None:
+        self._client.delete(
+            collection_name=collection_name,
+            points_selector=Filter(
+                must=[FieldCondition(
+                    key="doc_id",
+                    match=MatchValue(value=doc_id)
+                )]
+            ),
+        )
 
     def create_collection(
         self, collection_name: str, embedding_size: int, do_reset: bool = False

@@ -80,6 +80,8 @@ class Settings(BaseSettings):
     DEFAULT_LANG: str = "en"
     # RAG retrieval.
     RAG_TOP_K: int = Field(default=5, ge=1, le=20)
+    VECTOR_DB_HOST: Optional[str] = Field(default=None)
+    VECTOR_DB_PORT: int = Field(default=6333)
 
     @model_validator(mode="after")
     def firebase_credentials_must_be_present(self) -> "Settings":
