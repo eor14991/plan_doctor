@@ -68,3 +68,14 @@ async def upload_document(
             "file_id": result.file_id,
         },
     )
+
+@upload_router.get("/documents", status_code=status.HTTP_200_OK)
+async def upload_document(
+            upload_use_case: DocumentUploadUseCase = Depends(get_document_upload_use_case),
+    ) -> JSONResponse:
+    docs = await upload_use_case.list_documents()
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"docs": [doc.model_dump(mode='json') for doc in docs ]},
+
+        )
