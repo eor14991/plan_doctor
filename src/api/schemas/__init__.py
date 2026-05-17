@@ -1,1 +1,1 @@
-from .processing_schemas import ProcessingRequest
+from .processing_schemas import ProcessingRequest,ProcessingBatchRequest

@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import logging
 
+import asyncio
+
 from ..domain.entities.chunk import DataChunk
 from ..ports.repositories.i_chunk_repository import IChunkRepository
 from ..ports.repositories.i_document_repository import IDocumentRepository
@@ -149,3 +151,63 @@ class DocumentProcessingUseCase:
         routers never access _document_repo directly.
         """
         return await self._document_repo.get_by_id(doc_id)
+
+
+    async def execute_batch(
+            self,
+            documents: list[dict],
+            chunk_size: int = 450,
+            overlap_size: int = 40,
+            do_reset: bool = False,
+    ) -> dict:
+        """
+        Run the processing pipeline for multiple documents concurrently.
+
+        Args:
+            documents: List of dicts containing 'doc_id' and 'file_path'.
+                       Example: [{"doc_id": "123", "file_path": "/tmp/a.pdf"}]
+        """
+        tasks = [
+             self.execute(
+                doc_id=doc["doc_id"],
+                file_path=doc["file_path"],
+                chunk_size=chunk_size,
+                overlap_size=overlap_size,
+                do_reset=do_reset,
+            )
+            for doc in documents
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        success_count = 0
+        total_chunks = 0
+        errors = []
+
+        for i, result in enumerate(results):
+            doc_id = documents[i]["doc_id"]
+            if isinstance(result, Exception):
+                logger.error("Batch processing exception.", extra={"doc_id": doc_id, "error": str(result)})
+                errors.append({"doc_id": doc_id, "error": str(result)})
+            elif result.get("signal") == "PROCESSING_SUCCESSFUL":
+                success_count += 1
+                total_chunks += result.get("chunks_count", 0)
+            else:
+                errors.append({"doc_id": doc_id, "signal": result.get("signal")})
+
+        return {
+            "signal": "BATCH_PROCESSING_COMPLETE",
+            "processed_count": success_count,
+            "failed_count": len(errors),
+            "total_chunks_inserted": total_chunks,
+            "errors": errors,
+        }
+
+    async def get_documents_batch(self, doc_ids: list[str]) -> list:
+        """
+        Return multiple Document entities concurrently.
+        """
+        tasks = [self._document_repo.get_by_id(doc_id) for doc_id in doc_ids]
+        documents = await asyncio.gather(*tasks, return_exceptions=True)
+
+        return [doc for doc in documents if doc and not isinstance(doc, Exception)]
