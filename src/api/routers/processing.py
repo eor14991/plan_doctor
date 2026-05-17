@@ -27,16 +27,95 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Depends, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
 from fastapi.responses import JSONResponse
 
 from ...core.use_cases.document_processing import DocumentProcessingUseCase
 from ..dependencies import get_current_user_id, get_document_processing_use_case
-from ..schemas import ProcessingRequest
+from ..schemas import ProcessingRequest,ProcessingBatchRequest
 
 logger = logging.getLogger(__name__)
 
 processing_router = APIRouter(prefix="/processing", tags=["processing"])
+
+@processing_router.post("/batch", status_code=status.HTTP_202_ACCEPTED)
+async def process_batch_document(
+    body: ProcessingBatchRequest,
+    background_tasks: BackgroundTasks,
+    user_id: str = Depends(get_current_user_id),
+    processing_use_case: DocumentProcessingUseCase = Depends(get_document_processing_use_case),
+) -> JSONResponse:
+    documents = await processing_use_case.get_documents_batch(body.doc_ids)
+    if not documents:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No matching documents found."
+        )
+    batch_payload = [{
+        "doc_id":document.doc_id,
+        "file_path":document.file_path
+    } for document in documents]
+
+    if not batch_payload:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="FILE_PATH_MISSING: None of the requested documents have uploaded files."
+        )
+
+    background_tasks.add_task(
+        processing_use_case.execute_batch,
+        documents=batch_payload,
+        chunk_size=body.chunk_size,
+        overlap_size=body.overlap_size,
+        do_reset=body.do_reset,
+    )
+
+    return JSONResponse(
+        status_code=status.HTTP_202_ACCEPTED,
+        content={
+        "signal": "BATCH_PROCESSING_STARTED",
+        "doc_ids": [item["doc_id"] for item in batch_payload],
+        "message": "Processing started in background.",
+    })
+
+
+@processing_router.get("/batch/status")
+async def get_processing_status(
+        body: ProcessingBatchRequest,
+        user_id: str = Depends(get_current_user_id),
+        processing_use_case: DocumentProcessingUseCase = Depends(get_document_processing_use_case),
+) -> JSONResponse:
+    """
+    Return the current processing status for a document.
+
+    Possible status values:
+        uploaded    - File received, processing not yet started.
+        processing  - Chunking and indexing are in progress.
+        processed   - Pipeline completed successfully.
+        failed      - Pipeline encountered an unrecoverable error.
+    """
+    documents = await processing_use_case.get_documents_batch(body.doc_ids)
+    if not documents:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="No matching documents found."
+        )
+
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "results": [
+                {
+                    "doc_id": document.doc_id,
+                    "status": document.status,
+                    "file_name": document.file_name,
+                }
+                for document in documents
+            ]
+        }
+    )
+
+
 
 
 @processing_router.post("/{doc_id}", status_code=status.HTTP_202_ACCEPTED)
