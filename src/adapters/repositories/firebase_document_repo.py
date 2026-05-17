@@ -38,10 +38,9 @@ class FirebaseDocumentRepository(IDocumentRepository):
         self._db = db
         self._col = db.collection(_COLLECTION)
 
-    async def get_all(self, user_id: Optional[str] = None) -> List[Document]:
-        query = self._col.where("userId", "==", user_id) if user_id else self._col
+    async def get_all(self) -> List[Document]:
         result = []
-        async for doc in query.stream():
+        async for doc in self._col.order_by("uploadedAt", direction="DESCENDING").stream():
             result.append(self._to_entity(doc.id, doc.to_dict()))
         return result
 
