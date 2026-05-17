@@ -25,6 +25,7 @@ from .api.lifespan import lifespan
 from .api.routers.chat import chat_router
 from .api.routers.processing import processing_router
 from .api.routers.upload import upload_router
+from .api.routers.delete import delete_router
 
 
 def create_app() -> FastAPI:
@@ -46,6 +47,7 @@ def create_app() -> FastAPI:
     application.include_router(chat_router)
     application.include_router(upload_router)
     application.include_router(processing_router)
+    application.include_router(delete_router)
 
     @application.get("/")
     async def root():

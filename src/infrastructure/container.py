@@ -17,6 +17,7 @@ import os
 from dataclasses import dataclass, field
 from typing import Optional
 
+from ..core.use_cases.document_delete import DocumentDeleteUseCase
 from ..adapters.repositories.firebase_chat_repo import FirebaseChatRepository
 from ..adapters.repositories.firebase_chunk_repo import FirebaseChunkRepository
 from ..adapters.repositories.firebase_document_repo import FirebaseDocumentRepository
@@ -68,6 +69,7 @@ class Container:
 
     document_upload: Optional[DocumentUploadUseCase] = field(default=None)
     document_processing: Optional[DocumentProcessingUseCase] = field(default=None)
+    document_delete: Optional[DocumentDeleteUseCase] = field(default=None)
     chat_conversation: Optional[ChatConversationUseCase] = field(default=None)
     chat_summarization: Optional[ChatSummarizationUseCase] = field(default=None)
 
@@ -141,7 +143,7 @@ class Container:
             document_repo=c.document_repo,
             file_storage=c.file_storage,
             allowed_types=settings.FILE_ALLOWED_TYPES,
-            max_size_mb=settings.FILE_MAX_SIZE,
+            max_size_mb=settings.FILE_MAX_SIZE
         )
         c.document_processing = DocumentProcessingUseCase(
             document_repo=c.document_repo,
@@ -150,6 +152,14 @@ class Container:
             vector_store=c.vector_store,
             chunker=c.chunker,
         )
+
+        c.document_delete = DocumentDeleteUseCase(
+            document_repo=c.document_repo,
+            file_storage=c.file_storage,
+            chunk_repository=c.chunk_repo,
+            vector_store=c.vector_store,
+        )
+
         c.chat_conversation = ChatConversationUseCase(
             chat_repo=c.chat_repo,
             message_repo=c.message_repo,

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Depends, UploadFile, status, Response
 from fastapi.responses import JSONResponse
 
 from ...core.use_cases.document_upload import DocumentUploadUseCase

@@ -23,10 +23,16 @@ from __future__ import annotations
 
 import logging
 
+from langchain_community.chains.pebblo_retrieval.models import VectorDB
+
 from ..domain.entities.document import Document
 from ..domain.value_objects.file_upload_result import FileValidationResult
+from ..ports.repositories import IChunkRepository
 from ..ports.repositories.i_document_repository import IDocumentRepository
+from ..ports.services import IVectorStore
 from ..ports.storage.i_file_storage import IFileStorage
+
+_KNOWLEDGE_COLLECTION = "plant_knowledge"
 
 logger = logging.getLogger(__name__)
 

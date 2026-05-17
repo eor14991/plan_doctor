@@ -29,6 +29,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from slowapi import Limiter
 from slowapi.util import get_remote_address
 
+from ..core.use_cases.document_delete import DocumentDeleteUseCase
 from ..core.use_cases.chat_conversation import ChatConversationUseCase
 from ..core.use_cases.chat_summarization import ChatSummarizationUseCase
 from ..core.use_cases.document_processing import DocumentProcessingUseCase
@@ -103,3 +104,9 @@ def get_document_processing_use_case(
 ) -> DocumentProcessingUseCase:
     assert container.document_processing is not None
     return container.document_processing
+
+def get_document_delete_use_case(
+    container: Container = Depends(get_container),
+) -> DocumentDeleteUseCase:
+    assert container.document_delete is not None
+    return container.document_delete
