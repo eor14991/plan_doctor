@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Depends, UploadFile, status
+from fastapi import APIRouter, Depends, UploadFile, status, Response
 from fastapi.responses import JSONResponse
 
 from ...core.use_cases.document_upload import DocumentUploadUseCase
@@ -68,3 +68,16 @@ async def upload_document(
             "file_id": result.file_id,
         },
     )
+
+
+@upload_router.delete("/document/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_document(
+    doc_id: str,
+    upload_use_case: DocumentUploadUseCase = Depends(get_document_upload_use_case),
+):
+    signal = await upload_use_case.delete_document(doc_id)
+    signal = signal["signal"]
+    if signal == "DOCUMENT_DELETED":
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    else:
+        return Response(status_code=status.HTTP_404_NOT_FOUND)
