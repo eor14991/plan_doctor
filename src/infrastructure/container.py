@@ -126,14 +126,23 @@ class Container:
         c.generator = cls._build_generator(settings)
 
         # Step 7: Qdrant vector store.
-        db_path = os.path.abspath(os.path.join(settings.VECTOR_DB_PATH, settings.VECTOR_DB_BACKEND))
-        os.makedirs(db_path, exist_ok=True)
-        c.vector_store = QdrantAdapter(
-            db_path=db_path,
-            distance_method=settings.VECTOR_DB_DISTANCE_METHOD,
-        )
-        c.vector_store.connect()
-        logger.info("Qdrant connected.", extra={"db_path": db_path})
+        if settings.VECTOR_DB_HOST:
+            c.vector_store = QdrantAdapter(
+                host=settings.VECTOR_DB_HOST,
+                port=settings.VECTOR_DB_PORT,
+                distance_method=settings.VECTOR_DB_DISTANCE_METHOD,
+            )
+            logger.info("Qdrant connected (remote).", extra={"host": settings.VECTOR_DB_HOST})
+        else:
+            db_path = os.path.abspath(
+                os.path.join(settings.VECTOR_DB_PATH, settings.VECTOR_DB_BACKEND)
+            )
+            os.makedirs(db_path, exist_ok=True)
+            c.vector_store = QdrantAdapter(
+                db_path=db_path,
+                distance_method=settings.VECTOR_DB_DISTANCE_METHOD,
+            )
+            logger.info("Qdrant connected (local).", extra={"db_path": db_path})
 
         # Step 8: File storage adapter.
         c.file_storage = LocalFileStorageAdapter(base_upload_dir=settings.UPLOAD_BASE_DIR)

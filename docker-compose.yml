@@ -1,13 +1,13 @@
 version: "3.9"
+
 services:
 
   qdrant:
-    image: qdrant/qdrant:v1.9.1
+    image: qdrant/qdrant:latest
     container_name: plan_doctor_qdrant
     restart: unless-stopped
     ports:
-      - \"6333:6333\"
-      - \"6334:6334\"
+      - "6333:6333"
     volumes:
       - qdrant_data:/qdrant/storage
 
@@ -19,19 +19,19 @@ services:
     container_name: plan_doctor_app
     restart: unless-stopped
     ports:
-      - \"8000:8000\"
+      - "8000:8000"
     env_file:
       - .env
     environment:
-      VECTOR_DB_PATH: \"/app/storage/qdrant\"
+      VECTOR_DB_HOST: "qdrant"
+      VECTOR_DB_PORT: "6333"
     volumes:
       - uploads_data:/app/storage/uploads
-      - qdrant_local:/app/storage/qdrant
     depends_on:
       qdrant:
         condition: service_started
     healthcheck:
-      test: [\"CMD\", \"python\", \"-c\", \"import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')\"]
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -40,4 +40,3 @@ services:
 volumes:
   qdrant_data:
   uploads_data:
-  qdrant_local:

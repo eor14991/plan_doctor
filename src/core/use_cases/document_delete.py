@@ -70,11 +70,7 @@ class DocumentDeleteUseCase:
 
         await self._chunk_repository.delete_by_doc_id(doc_id=doc_id)
 
-        self._vector_store.delete_by_filter(
-            collection_name=_KNOWLEDGE_COLLECTION,
-            filter_key="metadata.doc_id",
-            filter_value=doc_id,
-        )
+        self._vector_store.delete_by_doc_id(_KNOWLEDGE_COLLECTION, doc_id)
 
         if document.file_path:
             await self._file_storage.delete_file(document.file_path)
@@ -107,10 +103,9 @@ class DocumentDeleteUseCase:
         )
 
         for d_id in valid_ids:
-            self._vector_store.delete_by_filter(
+            self._vector_store.delete_by_doc_id(
                 collection_name=_KNOWLEDGE_COLLECTION,
-                filter_key="metadata.doc_id",
-                filter_value=d_id,
+                doc_id = d_id
             )
 
         file_tasks = [self._file_storage.delete_file(doc.file_path) for doc in valid_docs if doc.file_path]

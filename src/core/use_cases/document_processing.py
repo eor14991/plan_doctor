@@ -84,7 +84,8 @@ class DocumentProcessingUseCase:
 
         if do_reset:
             await self._chunk_repo.delete_by_doc_id(doc_id)
-            logger.info("Existing chunks deleted for reset.", extra={"doc_id": doc_id})
+            self._vector_store.delete_by_doc_id(_KNOWLEDGE_COLLECTION, doc_id)
+            logger.info("Existing chunks and vectors deleted for reset.", extra={"doc_id": doc_id})
 
         # Ensure the Qdrant collection exists before inserting vectors.
         self._vector_store.create_collection(
@@ -118,18 +119,25 @@ class DocumentProcessingUseCase:
 
         # Embed all chunk texts.
         texts = [c.chunk_text for c in chunk_entities]
-        vectors = [
-            self._embedding_service.embed_text(text=t, document_type=DocumentType.DOCUMENT)
-            for t in texts
-        ]
 
-        # Insert into Qdrant.
+        loop = asyncio.get_running_loop()
+
+        vectors = await loop.run_in_executor(
+            None,
+            lambda: self._embedding_service.batch_embed_text(
+                texts, DocumentType.DOCUMENT, batch_size=32
+            )
+        )
+
         metadata_list = [{"doc_id": c.doc_id, "order": c.chunk_order} for c in chunk_entities]
-        self._vector_store.insert_many(
-            collection_name=_KNOWLEDGE_COLLECTION,
-            texts=texts,
-            vectors=vectors,
-            metadata=metadata_list,
+        await loop.run_in_executor(
+            None,
+            lambda: self._vector_store.insert_many(
+                collection_name=_KNOWLEDGE_COLLECTION,
+                texts=texts,
+                vectors=vectors,
+                metadata=metadata_list,
+            )
         )
 
         # Persist chunk records to Firestore.
