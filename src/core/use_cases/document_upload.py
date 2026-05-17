@@ -127,4 +127,6 @@ class DocumentUploadUseCase:
             asset_db_id=saved_doc.doc_id,
         )
 
-
+    async def list_documents(self) -> list[Document]:
+        docs = await self._document_repo.get_all()
+        return docs

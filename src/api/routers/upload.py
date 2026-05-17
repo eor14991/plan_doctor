@@ -69,15 +69,13 @@ async def upload_document(
         },
     )
 
+@upload_router.get("/documents", status_code=status.HTTP_200_OK)
+async def upload_document(
+            upload_use_case: DocumentUploadUseCase = Depends(get_document_upload_use_case),
+    ) -> JSONResponse:
+    docs = await upload_use_case.list_documents()
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={"docs": [doc.model_dump(mode='json') for doc in docs ]},
 
-@upload_router.delete("/document/{doc_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_document(
-    doc_id: str,
-    upload_use_case: DocumentUploadUseCase = Depends(get_document_upload_use_case),
-):
-    signal = await upload_use_case.delete_document(doc_id)
-    signal = signal["signal"]
-    if signal == "DOCUMENT_DELETED":
-        return Response(status_code=status.HTTP_204_NO_CONTENT)
-    else:
-        return Response(status_code=status.HTTP_404_NOT_FOUND)
+        )
