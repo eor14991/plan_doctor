@@ -26,7 +26,7 @@ class SentenceTransformerAdapter(IEmbeddingService):
         self._embedding_size = embedding_size
         self._model: Optional[SentenceTransformer] = None
         logger.info("Loading embedding model.", extra={"model_id": model_id})
-        self._model = SentenceTransformer(model_id)
+        self._model = SentenceTransformer(model_id, device="cpu")
         self._model.max_seq_length = 8192
         logger.info("Embedding model loaded.", extra={"embedding_size": embedding_size})
 

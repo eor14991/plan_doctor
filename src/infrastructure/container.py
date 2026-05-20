@@ -132,6 +132,7 @@ class Container:
                 port=settings.VECTOR_DB_PORT,
                 distance_method=settings.VECTOR_DB_DISTANCE_METHOD,
             )
+            c.vector_store.connect()
             logger.info("Qdrant connected (remote).", extra={"host": settings.VECTOR_DB_HOST})
         else:
             db_path = os.path.abspath(
@@ -142,6 +143,7 @@ class Container:
                 db_path=db_path,
                 distance_method=settings.VECTOR_DB_DISTANCE_METHOD,
             )
+            c.vector_store.connect()
             logger.info("Qdrant connected (local).", extra={"db_path": db_path})
 
         # Step 8: File storage adapter.

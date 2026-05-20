@@ -34,7 +34,7 @@ logger = logging.getLogger(__name__)
 class HuggingFaceSummarizationService:
     def __init__(self, model_id):
         self.tokenizer = AutoTokenizer.from_pretrained(model_id)
-        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_id)
+        self.model = AutoModelForSeq2SeqLM.from_pretrained(model_id, device_map="cpu")
 
     def summarize(self, text, max_length, min_length):
         inputs = self.tokenizer(text, return_tensors="pt", truncation=True)
@@ -54,7 +54,7 @@ class HuggingFaceSummarizationService:
 
             logger.info("Loading summarization model.", extra={"model_id": self._model_id})
             self._tokenizer = AutoTokenizer.from_pretrained(self._model_id)
-            self._model = AutoModelForSeq2SeqLM.from_pretrained(self._model_id)
+            self._model = AutoModelForSeq2SeqLM.from_pretrained(self._model_id, device_map="cpu")
             logger.info("Summarization model loaded.")
         except Exception:
             logger.error("Failed to load summarization model.", exc_info=True)
